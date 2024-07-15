@@ -1,0 +1,24 @@
+data:
+  train: 
+    path:
+  val: 
+    path: 
+
+model:
+  embedding_dim: 768
+  n_layers: 12
+  heads: 12
+  head_size: 64
+  block_size: 64
+  device: mps
+
+dataloader:
+  batch_size: 2
+  shuffle: True
+  num_workers: 0
+  #prefetch_factor: 2 # Should be >0 in case multiprocessing is enabled, i.e. num_workers > 0
+  drop_last: False
+
+trainer:
+  max_epochs: 100
+  log_every_n_steps: 25
