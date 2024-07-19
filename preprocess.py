@@ -36,7 +36,6 @@ if __name__ == '__main__':
     tokenizer = base_tokenizer.train_new_from_iterator(dataset['Text'], vocab_size=2048)
     
     def process(sample):
-        print(sample)
         ids = tokenizer.encode(sample['Text'])
         ids.append(tokenizer.eos_token_id)
         out = {'ids': ids, 'len': len(ids)}
@@ -47,7 +46,7 @@ if __name__ == '__main__':
         process,
         remove_columns=['Text'],
         desc="tokenizing the splits",
-        #num_proc=num_proc, #TODO parallelize this
+        num_proc=2
     )
     
     for split, dset in tokenized.items():
@@ -55,7 +54,7 @@ if __name__ == '__main__':
         filename = os.path.join(os.path.dirname(__file__), f'{split}.bin')
         dtype = np.uint16 # (can do since enc.max_token_value == 50256 is < 2**16)
         arr = np.memmap(filename, dtype=dtype, mode='w+', shape=(arr_len,))
-        total_batches = 5 #This value mgiht change later when i get to model training specifics
+        total_batches = 20 #This value mgiht change later when i get to model training specifics
 
         idx = 0
         for batch_idx in tqdm(range(total_batches), desc=f'writing {filename}'):
