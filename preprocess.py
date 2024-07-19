@@ -3,7 +3,7 @@ from tqdm import tqdm
 import numpy as np
 import pandas as pd
 
-from transformers import AutoTokenizer
+from transformers import AutoTokenizer # huggingface tokenizers
 from datasets import load_dataset # huggingface datasets
 
 
@@ -23,7 +23,7 @@ def contains_arabic(text):
 if __name__ == '__main__':
     
     dataset = load_dataset("ayoubkirouane/Algerian-Darija", split='v1')
-    
+    # Filtering out rows where there are no arabic words
     dataset = dataset.filter(lambda s: contains_arabic(s['Text']))
     
     # owt by default only contains the 'train' split, so create a test split
@@ -50,13 +50,12 @@ if __name__ == '__main__':
         #num_proc=num_proc, #TODO parallelize this
     )
     
-    #TODO change this loop, divide into shards the entire dataset in one go, no need for a loop i think
     for split, dset in tokenized.items():
         arr_len = np.sum(dset['len'], dtype=np.uint64)
         filename = os.path.join(os.path.dirname(__file__), f'{split}.bin')
         dtype = np.uint16 # (can do since enc.max_token_value == 50256 is < 2**16)
         arr = np.memmap(filename, dtype=dtype, mode='w+', shape=(arr_len,))
-        total_batches = 5 #TODO re-compute this value
+        total_batches = 5 #This value mgiht change later when i get to model training specifics
 
         idx = 0
         for batch_idx in tqdm(range(total_batches), desc=f'writing {filename}'):
