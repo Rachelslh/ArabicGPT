@@ -6,7 +6,7 @@ from dataclasses import dataclass
 
 torch.manual_seed(32)
 
-#TODO Convert this into from-scratch code, using just plain pytorch, without lightning framework
+#TODO Parallelize attention, keep both versions though
  
 @dataclass
 class GPTConfig:

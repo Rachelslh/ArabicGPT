@@ -1,7 +1,7 @@
 import tiktoken
 import torch
 
-#TODO parallelize this into multiple num workers, add batch permutation, add shards
+#TODO parallelize this into multiple workers, add batch permutation, maybe some data augmentations?
 
 class Dataloader:
     def __init__(self, path: str, block_size: int, batch_size: int) -> None:

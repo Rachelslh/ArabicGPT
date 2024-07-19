@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 
-from dataset import TokenDataset
+from dataset import Dataloader
 
 
 config = OmegaConf.load("config/config.yaml")
@@ -13,7 +13,7 @@ block_size = config.model.block_size
 train_dataset = TokenDataset(**config.data.val, block_size=block_size)
 val_dataset = TokenDataset(**config.data.val, block_size=block_size)
 
-
+#TODO Convert this lightning code into plain pytorch
 
 def training_step(self, batch, batch_idx):
     x, y = batch
