@@ -1,14 +1,23 @@
 import torch
 import torch.nn as nn
 from torch.nn.functional import softmax
-from lightning import LightningModule
-import numpy as np
+
+from dataclasses import dataclass
 
 torch.manual_seed(32)
 
-#TODO Conert this into from-scratch code, using just plain pytorch, without lightning framework
+#TODO Convert this into from-scratch code, using just plain pytorch, without lightning framework
  
-class TransformerDecoder(LightningModule):
+@dataclass
+class GPTConfig:
+    embedding_dim: 768
+    n_layers: 12
+    heads: 12
+    head_size: 64
+    block_size: 64
+    
+    
+class GPT(nn.Module):
     def __init__(self, num_tokens: int, embedding_dim: int, block_size: int, n_layers: int, heads: int, head_size: int, **kwargs) -> None:
         super().__init__()
         self.block_size = block_size
@@ -17,7 +26,7 @@ class TransformerDecoder(LightningModule):
         self.transformer = nn.ModuleDict(dict(
             embedding_table = nn.Embedding(num_tokens, embedding_dim),
             positional_encodings_table = nn.Embedding(block_size, embedding_dim),
-            blocks = nn.ModuleList(TransformerLayer(heads, head_size, block_size, embedding_dim) for _ in range(n_layers))
+            blocks = nn.ModuleList(TransformerBlock(heads, head_size, block_size, embedding_dim) for _ in range(n_layers))
         ))
         
         self.lm_head = nn.Linear(embedding_dim, num_tokens)
@@ -52,34 +61,6 @@ class TransformerDecoder(LightningModule):
             
         return logits, loss
     
-    def training_step(self, batch, batch_idx):
-        x, y = batch
-        logits, loss = self.forward(x, y)
-        self.training_step_outputs.append(loss.item())
-        self.log("train_loss", loss, prog_bar=True, on_step=False, on_epoch=True)
-        return loss
-    
-    def on_train_epoch_end(self) -> None:
-        self.loss['train'].append(np.mean(self.training_step_outputs))
-        self.training_step_outputs.clear()
-        return super().on_train_epoch_end()
-    
-    def validation_step(self, batch, batch_idx):
-        x, y = batch
-        _, loss = self.forward(x, y)
-        self.validation_step_outputs.append(loss.item())
-        self.log("val_loss", loss, prog_bar=True, on_step=False, on_epoch=True)
-        return loss
-        
-    def on_validation_epoch_end(self) -> None:
-        self.loss['val'].append(np.mean(self.validation_step_outputs))
-        self.validation_step_outputs.clear()
-        return super().on_validation_epoch_end()
-    
-    def configure_optimizers(self):
-        optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
-        return optimizer
-    
     @torch.no_grad()
     def generate(self, sequence, max_new_tokens, top_k, device):
         self.to(device)
@@ -97,7 +78,7 @@ class TransformerDecoder(LightningModule):
         return sequence
 
 
-class TransformerLayer(nn.Module):
+class TransformerBlock(nn.Module):
     def __init__(self, heads: int, head_size: int, block_size: int, emb_d: int, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.attention_block = MultiHeadAttention(heads, head_size, block_size, emb_d)
@@ -112,6 +93,7 @@ class TransformerLayer(nn.Module):
         return out
     
     
+#TODO Parallelize this
 class ScaledSelfAttentionHead(nn.Module):
     def __init__(self, head_size: int, block_size: int, emb_d: int, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)

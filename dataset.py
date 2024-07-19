@@ -1,44 +1,35 @@
 import tiktoken
 import torch
 
-#TODO Implement batch retrieval, encoder and decoder using lambda functions
+#TODO parallelize this into multiple num workers, add batch permutation, add shards
 
-class TokenDataset:
-    def __init__(self, path: str, block_size: int) -> None:
+class Dataloader:
+    def __init__(self, path: str, block_size: int, batch_size: int) -> None:
+        self.B = batch_size
+        self.T = block_size
+        
         with open(path, 'r') as f:
             self.raw_data = f.read()
             
         torch.manual_seed(32)
         
-        '''
-        Keeping this character-based code, in case i decide to roll back to chars instead of words/subwords.
-        
-        #logger.debug(f'length of dataset in characters: {len(self.raw_data)}')
-        #self.chars = sorted(list(set(self.data)))
-        #self.vocab_size = len(self.chars)
-        #logger.debug(f"vocabulary: [{''.join(self.chars)}], size: {len(self.chars)}")
-        
-        #ctoi = {c: i for i, c in enumerate(self.chars)}
-        #self.encode = lambda s: [ctoi[c] for c in s]
-    
-        #itoc = {i: c for i, c in enumerate(self.chars)}
-        #self.decode = lambda ints: ''.join([itoc[i] for i in ints])
-        '''
-        
         self.encoding = tiktoken.get_encoding("gpt2")
         self.vocab_size = self.encoding.n_vocab
-        self.data = torch.tensor(self.encoding.encode(self.raw_data))
+        self.encode = lambda s: self.encoding.encode(s)
+        self.decode = lambda s: self.encoding.decode(s)
+        self.data = torch.tensor(self.encode(self.raw_data))
         
-        self.block_size = block_size
-        self.max_num_samples = len(self.data) // self.block_size
-        
+        self.num_samples = len(self.data) // self.T
+        self.curr_pos = 0
     
     def get_batch(self, ):
-        index = index * self.block_size + 1
-        if index > len(self.data)-self.block_size:
-            index = torch.randint(high=len(self.data)-self.block_size, size=(1,)).item
-        x = self.data[index: index + self.block_size]
-        y = self.data[index+1: index + self.block_size + 1]
+        if self.curr_pos > len(self.data) - self.B * self.T:
+            self.curr_pos = 0
+            
+        x = torch.split(self.data[self.curr_pos: self.curr_pos + (self.B * self.T)], [self.B, self.T])
+        y = torch.split(self.data[self.curr_pos + 1: self.curr_pos + (self.B * self.T) + 1], [self.B, self.T]) # shifted to the right by 1 position
+        
+        self.curr_pos = self.B * self.T + 1
         
         return x, y
     
