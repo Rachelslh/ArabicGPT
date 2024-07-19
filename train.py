@@ -1,3 +1,4 @@
+import time
 
 from omegaconf import OmegaConf
 import matplotlib.pyplot as plt
@@ -5,40 +6,36 @@ import numpy as np
 import torch
 
 from dataset import Dataloader
+from model import GPTConfig, GPT
 
 
 config = OmegaConf.load("config/config.yaml")
 
+dataloader = Dataloader(**config.dataloader, device='mps')
+
+model_config = GPTConfig(vocab_size=dataloader.vocab_size, **config.model)
+model = GPT(model_config)
+
+#TODO add logging into wandb, add checkpointing
+
 block_size = config.model.block_size
-train_dataset = TokenDataset(**config.data.val, block_size=block_size)
-val_dataset = TokenDataset(**config.data.val, block_size=block_size)
+batch_size = config.dataloader.batch_size
+iterations = config.trainer.steps_per_epoch * config.trainer.epochs
 
-#TODO Convert this lightning code into plain pytorch
+optimizer = torch.optim.Adam(model.parameters(), lr=config.trainer.init_lr)
 
-def training_step(self, batch, batch_idx):
-    x, y = batch
-    logits, loss = self.forward(x, y)
-    self.training_step_outputs.append(loss.item())
-    self.log("train_loss", loss, prog_bar=True, on_step=False, on_epoch=True)
-    return loss
-
-def on_train_epoch_end(self) -> None:
-    self.loss['train'].append(np.mean(self.training_step_outputs))
-    self.training_step_outputs.clear()
-    return super().on_train_epoch_end()
-
-def validation_step(self, batch, batch_idx):
-    x, y = batch
-    _, loss = self.forward(x, y)
-    self.validation_step_outputs.append(loss.item())
-    self.log("val_loss", loss, prog_bar=True, on_step=False, on_epoch=True)
-    return loss
+optimizer.zero_grad()
+for step in range(iterations):
+    t0 = time.time()
     
-def on_validation_epoch_end(self) -> None:
-    self.loss['val'].append(np.mean(self.validation_step_outputs))
-    self.validation_step_outputs.clear()
-    return super().on_validation_epoch_end()
+    x, y = dataloader.get_batch(split='train')
+    logits, loss = model(x, y)
+    loss.backward()
+    optimizer.step()
+    
+    t1 = time.time()
+    dt = t1 - t0 # time difference in seconds
+    tokens_processed = dataloader.B * dataloader.T
+    tokens_per_sec = tokens_processed / dt
 
-def configure_optimizers(self):
-    optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
-    return optimizer
+    print(f"step {step:4d} | loss: {loss.item():.6f} | dt: {dt*1000:.2f}ms | tok/sec: {tokens_per_sec:.2f}")

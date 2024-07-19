@@ -10,26 +10,27 @@ torch.manual_seed(32)
  
 @dataclass
 class GPTConfig:
-    embedding_dim: 768
-    n_layers: 12
-    heads: 12
-    head_size: 64
-    block_size: 64
+    vocab_size: int = 50304
+    embedding_dim: int = 768
+    n_layers: int = 12
+    heads: int = 12
+    head_size: int = 64
+    block_size: int = 64
     
     
 class GPT(nn.Module):
-    def __init__(self, num_tokens: int, embedding_dim: int, block_size: int, n_layers: int, heads: int, head_size: int, **kwargs) -> None:
+    def __init__(self, vocab_size: int, embedding_dim: int, block_size: int, n_layers: int, heads: int, head_size: int, **kwargs) -> None:
         super().__init__()
         self.block_size = block_size
         
         # Model layers
         self.transformer = nn.ModuleDict(dict(
-            embedding_table = nn.Embedding(num_tokens, embedding_dim),
+            embedding_table = nn.Embedding(vocab_size, embedding_dim),
             positional_encodings_table = nn.Embedding(block_size, embedding_dim),
             blocks = nn.ModuleList(TransformerBlock(heads, head_size, block_size, embedding_dim) for _ in range(n_layers))
         ))
         
-        self.lm_head = nn.Linear(embedding_dim, num_tokens)
+        self.lm_head = nn.Linear(embedding_dim, vocab_size)
         
         self.loss_func = nn.CrossEntropyLoss()
         
