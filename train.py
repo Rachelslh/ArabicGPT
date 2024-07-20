@@ -39,6 +39,6 @@ for step in range(iterations):
     t1 = time.time()
     dt = t1 - t0 # time difference in seconds
     tokens_processed = dataloader.B * dataloader.T
-    tokens_per_sec = tokens_processed / dt
+    tokens_per_sec = tokens_processed / dt # throughput
 
     print(f"step {step:4d} | loss: {loss.item():.6f} | dt: {dt*1000:.2f}ms | tok/sec: {tokens_per_sec:.2f}")
