@@ -28,7 +28,7 @@ model.to(device)
 optimizer.zero_grad()
 
 for step in range(iterations):
-    t0 = time.time()
+    t0 = time.time() 
     
     x, y = dataloader.get_batch(split='train')
     logits, loss = model(x, y, device=device)

@@ -32,6 +32,9 @@ class GPT(nn.Module):
         
         self.lm_head = nn.Linear(config.embedding_dim, config.vocab_size)
         
+        # weight sharing scheme as in GPT2, i.e. same weights are in embedding layer and the LM head (last linear layer)
+        self.transformer.embedding_table.weight = self.lm_head.weight
+        
         self.loss_func = nn.CrossEntropyLoss()
         self.loss = {'train': [], 'val': []}
         
