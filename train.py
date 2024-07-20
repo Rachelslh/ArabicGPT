@@ -34,6 +34,7 @@ for step in range(iterations):
     logits, loss = model(x, y, device=device)
     loss.backward()
     optimizer.step()
+    optimizer.zero_grad() #TODO check this
     
     t1 = time.time()
     dt = t1 - t0 # time difference in seconds
