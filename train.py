@@ -14,7 +14,7 @@ config = OmegaConf.load("config/config.yaml")
 block_size = config.model.block_size
 batch_size = config.dataloader.batch_size
 iterations = config.trainer.steps * config.trainer.epochs
-device ='mps'
+device = config.trainer.device
 
 dataloader = Dataloader(**config.dataloader, block_size=block_size, device=device)
 
