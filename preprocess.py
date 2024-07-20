@@ -34,7 +34,9 @@ if __name__ == '__main__':
     base_tokenizer = AutoTokenizer.from_pretrained("gpt2")
     # Train the new tokenizer
     tokenizer = base_tokenizer.train_new_from_iterator(dataset['Text'], vocab_size=2048)
-    
+    # Save the new tokenizer
+    tokenizer.save_pretrained("dardja_tokenizer")
+
     def process(sample):
         ids = tokenizer.encode(sample['Text'])
         ids.append(tokenizer.eos_token_id)
