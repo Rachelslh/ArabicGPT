@@ -11,25 +11,27 @@ from model import GPTConfig, GPT
 
 config = OmegaConf.load("config/config.yaml")
 
-dataloader = Dataloader(**config.dataloader, device='mps')
+block_size = config.model.block_size
+batch_size = config.dataloader.batch_size
+iterations = config.trainer.steps * config.trainer.epochs
+device ='mps'
+
+dataloader = Dataloader(**config.dataloader, block_size=block_size, device=device)
 
 model_config = GPTConfig(vocab_size=dataloader.vocab_size, **config.model)
 model = GPT(model_config)
 
 #TODO add logging into wandb, add checkpointing
 
-block_size = config.model.block_size
-batch_size = config.dataloader.batch_size
-iterations = config.trainer.steps_per_epoch * config.trainer.epochs
-
 optimizer = torch.optim.Adam(model.parameters(), lr=config.trainer.init_lr)
-
+model.to(device)
 optimizer.zero_grad()
+
 for step in range(iterations):
     t0 = time.time()
     
     x, y = dataloader.get_batch(split='train')
-    logits, loss = model(x, y)
+    logits, loss = model(x, y, device=device)
     loss.backward()
     optimizer.step()
     

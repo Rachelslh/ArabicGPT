@@ -19,32 +19,29 @@ class GPTConfig:
     
     
 class GPT(nn.Module):
-    def __init__(self, vocab_size: int, embedding_dim: int, block_size: int, n_layers: int, heads: int, head_size: int, **kwargs) -> None:
+    def __init__(self, config, **kwargs) -> None:
         super().__init__()
-        self.block_size = block_size
+        self.block_size = config.block_size
         
         # Model layers
         self.transformer = nn.ModuleDict(dict(
-            embedding_table = nn.Embedding(vocab_size, embedding_dim),
-            positional_encodings_table = nn.Embedding(block_size, embedding_dim),
-            blocks = nn.ModuleList(TransformerBlock(heads, head_size, block_size, embedding_dim) for _ in range(n_layers))
+            embedding_table = nn.Embedding(config.vocab_size, config.embedding_dim),
+            positional_encodings_table = nn.Embedding(config.block_size, config.embedding_dim),
+            blocks = nn.ModuleList(TransformerBlock(config.heads, config.head_size, config.block_size, config.embedding_dim) for _ in range(config.n_layers))
         ))
         
-        self.lm_head = nn.Linear(embedding_dim, vocab_size)
+        self.lm_head = nn.Linear(config.embedding_dim, config.vocab_size)
         
         self.loss_func = nn.CrossEntropyLoss()
-        
-        self.training_step_outputs = []
-        self.validation_step_outputs = []
         self.loss = {'train': [], 'val': []}
         
-    def forward(self, tokens, targets=None):
+    def forward(self, tokens, targets=None, device=None):
         B, T = tokens.shape
         assert T <= self.block_size, "The sequence is longer than the permitted block size"
         # tokens is of shape [B, T], targets shape [B, T]
         emb_input = self.transformer.embedding_table(tokens) # [B, T, emb_d]
         # Add positional encoding
-        pos_emb = self.transformer.positional_encodings_table((torch.arange(T, device=self.device))) # [T, emb_d]
+        pos_emb = self.transformer.positional_encodings_table((torch.arange(T, device=device))) # [T, emb_d]
         emb_input += pos_emb
         for layer in self.transformer.blocks:
             out = layer(emb_input)

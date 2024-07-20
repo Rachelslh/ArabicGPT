@@ -15,8 +15,8 @@ model:
   block_size: 64
 
 trainer:
-  step_per_epoch: 
-  epochs: 100
+  steps: 10
+  epochs: 10
   init_lr: 1e-3
   log_every_n_steps: 25
   device: mps
