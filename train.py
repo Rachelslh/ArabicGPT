@@ -34,7 +34,8 @@ for step in range(iterations):
     logits, loss = model(x, y, device=device)
     loss.backward()
     optimizer.step()
-    optimizer.zero_grad() #TODO check this
+    # flush the gradients as soon as we can, no need for this memory anymore
+    optimizer.zero_grad(set_to_none=True)
     
     t1 = time.time()
     dt = t1 - t0 # time difference in seconds
