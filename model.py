@@ -1,3 +1,6 @@
+from typing import Union
+import math
+
 import torch
 import torch.nn as nn
 from torch.nn.functional import softmax
@@ -7,7 +10,9 @@ from dataclasses import dataclass
 torch.manual_seed(32)
 
 #TODO Parallelize attention, keep both versions though
- 
+RESIDUAL_PROJECTION_LAYER_NAME = 'proj_layer'
+
+
 @dataclass
 class GPTConfig:
     vocab_size: int = 50304
@@ -21,6 +26,7 @@ class GPTConfig:
 class GPT(nn.Module):
     def __init__(self, config, **kwargs) -> None:
         super().__init__()
+        self.config = config
         self.block_size = config.block_size
         
         # Model layers
@@ -37,6 +43,22 @@ class GPT(nn.Module):
         
         self.loss_func = nn.CrossEntropyLoss()
         self.loss = {'train': [], 'val': []}
+        
+        self.apply(self._init_weights)
+                
+    def _init_weights(self, module):
+        std = 0.02
+        if isinstance(module, nn.Linear):
+            torch.nn.init.normal_(module.weight, mean=0.0, std=std)
+            if module.bias is not None:
+                torch.nn.init.zeros_(module.bias) # torch normally init this with a uniform
+        elif isinstance(module, nn.Embedding):
+            torch.nn.init.normal_(module.weight, mean=0.0, std=std)
+            
+        # apply special scaled init to the residual projections, per GPT-2 paper
+        for pn, p in module.named_parameters():
+            if pn.endswith(F'{RESIDUAL_PROJECTION_LAYER_NAME}.weight'):
+                torch.nn.init.normal_(p, mean=0.0, std=0.02/math.sqrt(2 * self.config.n_layers))
         
     def forward(self, tokens, targets=None, device=None):
         B, T = tokens.shape
@@ -130,12 +152,12 @@ class MultiHeadAttention(nn.Module):
         self.block_Size = block_size
         
         self.self_attention_blocks = nn.ModuleList([ScaledSelfAttentionHead(head_size, block_size, emb_d) for _ in range(heads)])
-        self.ln_layer = nn.Linear(heads*head_size, emb_d)
+        setattr(self, RESIDUAL_PROJECTION_LAYER_NAME, nn.Linear(heads*head_size, emb_d)) # output projection
         
     def forward(self, inputs):
         outputs = [attention(inputs) for attention in self.self_attention_blocks]
         out = torch.cat(outputs, -1)
-        return self.ln_layer(out)
+        return self.proj_layer(out)
         
         
 class FeedForwardNetwork(nn.Module): 
@@ -145,9 +167,10 @@ class FeedForwardNetwork(nn.Module):
         self.linear_block = nn.Sequential(
             nn.Linear(features_in, features_out),
             nn.ReLU(),
-            nn.Linear(features_out, features_in)
         )
+        setattr(self, RESIDUAL_PROJECTION_LAYER_NAME, nn.Linear(features_out, features_in))
         
     def forward(self, inputs):
-        return self.linear_block(inputs)
+        out = self.linear_block(inputs)
+        return self.proj_layer(out)
         
