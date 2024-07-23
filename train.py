@@ -27,11 +27,15 @@ optimizer = torch.optim.Adam(model.parameters(), lr=config.trainer.init_lr)
 model.to(device)
 optimizer.zero_grad()
 
+loss_per_step = {'train': [], 'val': []}
+
 for step in range(iterations):
     t0 = time.time() 
     
     x, y = dataloader.get_batch(split='train')
     logits, loss = model(x, y, device=device)
+    loss_per_step['train'].append(loss.item())
+    
     loss.backward()
     optimizer.step()
     # flush the gradients as soon as we can, no need for this memory anymore
@@ -43,3 +47,18 @@ for step in range(iterations):
     tokens_per_sec = tokens_processed / dt # throughput
 
     print(f"step {step:4d} | loss: {loss.item():.6f} | dt: {dt*1000:.2f}ms | tok/sec: {tokens_per_sec:.2f}")
+    
+epochs_array = np.arange(1, iterations + 1)
+# Plot and label the training and validation loss values
+plt.plot(epochs_array, loss_per_step['train'], label='Training Loss')
+#plt.plot(epochs_array, loss_per_step['val'][1:], label='Validation Loss') # Avoiding the sanity check val step here
+ 
+plt.title('Training and Validation Loss')
+plt.xlabel('Epochs')
+plt.ylabel('Loss')
+ 
+plt.legend(loc='best')
+
+plt.savefig('assets/loss.jpg')
+
+plt.show()
