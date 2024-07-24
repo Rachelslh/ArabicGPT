@@ -1,7 +1,7 @@
 
 dataloader:
   data_dir: data
-  batch_size: 2
+  batch_size: 16
   shuffle: True
   num_workers: 0
   #prefetch_factor: 2 # Should be >0 in case multiprocessing is enabled, i.e. num_workers > 0
@@ -12,11 +12,10 @@ model:
   n_layers: 12
   heads: 12
   head_size: 64
-  block_size: 64
+  block_size: 1024
 
 trainer:
-  steps: 10
-  epochs: 10
+  steps: 183
+  epochs: 1
   init_lr: 1e-3
   log_every_n_steps: 25
-  device: mps

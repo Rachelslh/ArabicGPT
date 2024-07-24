@@ -3,7 +3,7 @@ import math
 
 import torch
 import torch.nn as nn
-from torch.nn.functional import softmax
+from torch.nn.functional import softmax, scaled_dot_product_attention
 
 from dataclasses import dataclass
 
@@ -135,12 +135,13 @@ class ScaledSelfAttentionHead(nn.Module):
         q = self.query(inputs) # [B, T, head_size]
         v = self.value(inputs) # [B, T, head_size]
         
-        weights = q @ k.transpose(-2, -1) * self.head_size**-0.5 # [B, T, head_size] * [B, T, head_Size] -> [B, T, head_size] * [B, head_Size, T] = [B, T, T]
+        #weights = q @ k.transpose(-2, -1) * self.head_size**-0.5 # [B, T, head_size] * [B, T, head_Size] -> [B, T, head_size] * [B, head_Size, T] = [B, T, T]
+        #weights = weights.masked_fill((self.tril[:T, :T] == 0), float('-inf'))
+        #weights = softmax(weights, dim=1)
+        #input_w_past_attention = weights @ v # [B, T, T] * [B, T, head_size] = [B, T, head_size]
         
-        weights = weights.masked_fill((self.tril[:T, :T] == 0), float('-inf'))
-        weights = softmax(weights, dim=1)
-        input_w_past_attention = weights @ v # [B, T, T] * [B, T, head_size] = [B, T, head_size]
-        
+        # Using Flash attention here for some optimization
+        input_w_past_attention = scaled_dot_product_attention(q, k, v, is_causal=True)
         return input_w_past_attention
     
     
