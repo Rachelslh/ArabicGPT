@@ -4,7 +4,6 @@ from transformers import AutoTokenizer # huggingface tokenizers
 import torch
 import numpy as np
 
-#TODO add batch permutation, maybe some data augmentations?
 
 class Dataloader:
     def __init__(self, data_dir: str, block_size: int, batch_size: int, device: str, **kwargs) -> None:        

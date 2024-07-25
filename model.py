@@ -140,7 +140,7 @@ class ScaledSelfAttentionHead(nn.Module):
         #weights = softmax(weights, dim=1)
         #input_w_past_attention = weights @ v # [B, T, T] * [B, T, head_size] = [B, T, head_size]
         
-        # Using Flash attention here for some optimization
+        # Using Flash attention here for some optimization instead of the 4 lines commented-out above
         input_w_past_attention = scaled_dot_product_attention(q, k, v, is_causal=True)
         return input_w_past_attention
     
