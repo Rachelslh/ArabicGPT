@@ -83,7 +83,7 @@ class GPT(nn.Module):
             loss = None
             
         return logits, loss
-    
+        
     @torch.no_grad()
     def generate(self, sequence, max_new_tokens, top_k, device):
         self.to(device)

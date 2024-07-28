@@ -1,7 +1,7 @@
 
 dataloader:
   data_dir: data
-  batch_size: 16
+  batch_size: 2 # Because grad accumulation steps > 1, we're simulating a batch size of 64
   shuffle: True
   num_workers: 0
   #prefetch_factor: 2 # Should be >0 in case multiprocessing is enabled, i.e. num_workers > 0
@@ -16,8 +16,9 @@ model:
   block_size: 1024
 
 trainer:
-  steps: 183
+  steps: 734
+  gradient_accumulation_steps: 2
   epochs: 1
-  val_steps: 20
+  val_steps: 4
   init_lr: 1e-3
   checkpoint_dir: checkpoints

@@ -3,6 +3,7 @@ import time
 
 from omegaconf import OmegaConf
 import matplotlib.pyplot as plt
+import scipy.interpolate as interp
 import numpy as np
 import torch
 
@@ -10,11 +11,27 @@ from dataset import Dataloader
 from model import GPTConfig, GPT
 
 
+def evaluate():
+    model.eval()
+    losses = torch.zeros(val_steps)
+    for val_step in range(val_steps):
+        x, y = dataloader.get_batch(split='val')
+        _, loss = model(x, y, device=device)
+        losses[val_step] = loss.item()
+    loss = losses.mean().item()
+    model.train()
+    
+    return loss
+ 
+ 
+#TODO add wandb
+
 config = OmegaConf.load("config/config.yaml")
 
 block_size = config.model.block_size
 batch_size = config.dataloader.batch_size
 iterations = config.trainer.steps * config.trainer.epochs
+gradient_accumulation_steps = config.trainer.gradient_accumulation_steps
 val_steps = config.trainer.val_steps
 ckpt_dir = config.trainer.checkpoint_dir
 
@@ -43,30 +60,18 @@ optimizer.zero_grad()
 model.to(device)
 
 loss_per_step = {'train': [], 'val': []}
+x, y = dataloader.get_batch(split='train')
 
 best_val_loss = float('inf')
-for step in range(iterations):
-    t0 = time.time() 
-    
-    x, y = dataloader.get_batch(split='train')
-    logits, loss = model(x, y, device=device)
-    loss_per_step['train'].append(loss.item())
-    
-    loss.backward()
-    optimizer.step()
-    
+for step in range(iterations):    
     # Evaluate on validation data every n iterations
     if step > 0 and step % 20 == 0:
-        losses = torch.zeros(val_steps)
-        for val_step in range(val_steps):
-            x, y = dataloader.get_batch(split='val')
-            _, loss = model(x, y, device=device)
-            losses[val_step] = loss.item()
-        loss_per_step['val'].append(losses.mean().item())
+        val_loss = evaluate()
+        loss_per_step['val'].append(val_loss)
         
         # Checkpointing best model
-        if step > 0 and loss < best_val_loss:
-            best_val_loss = loss_per_step['val'][-1]
+        if step > 0 and val_loss < best_val_loss:
+            best_val_loss = val_loss
             checkpoint = {
                 'model': model.state_dict(),
                 'optimizer': optimizer.state_dict(),
@@ -77,14 +82,27 @@ for step in range(iterations):
             }
             print(f"saving checkpoint to {ckpt_dir}")
             torch.save(checkpoint, os.path.join(ckpt_dir, 'ckpt.pt'))
-    
+            
+    t0 = time.time() 
+    micro_losses = torch.zeros(gradient_accumulation_steps)
+    for micro_step in range(gradient_accumulation_steps):
+        logits, loss = model(x, y, device=device)
+        loss /= gradient_accumulation_steps
+        micro_losses[micro_step] = loss
+        loss.backward()  
+        
+        x, y = dataloader.get_batch(split='train')
+        
+    optimizer.step()
+    loss_per_step['train'].append(micro_losses.mean().item())
+        
     # Flush the gradients before next step
     optimizer.zero_grad(set_to_none=True)
     
     # Measure throughput
     t1 = time.time()
     dt = t1 - t0 # time difference in seconds
-    tokens_processed = dataloader.B * dataloader.T
+    tokens_processed = dataloader.B * gradient_accumulation_steps * dataloader.T
     tokens_per_sec = tokens_processed / dt # throughput
     print(f"step {step:4d} | loss: {loss.item():.6f} | dt: {dt*1000:.2f}ms | tok/sec: {tokens_per_sec:.2f}")
     
@@ -93,7 +111,11 @@ for step in range(iterations):
 epochs_array = np.arange(1, iterations + 1)
 # Plot and label the training and validation loss values
 plt.plot(epochs_array, loss_per_step['train'], label='Training Loss')
-plt.plot(epochs_array, loss_per_step['val'], label='Validation Loss')
+
+val_epochs_array = np.arange(1, len(loss_per_step['val']) + 1) * 20
+y_inter = interp.interp1d(val_epochs_array, loss_per_step['val'])
+y_ = y_inter(np.linspace(20, val_epochs_array[-1], iterations))
+plt.plot(epochs_array, y_, label='Validation Loss')
  
 plt.title('Training and Validation Loss')
 plt.xlabel('Epochs')
