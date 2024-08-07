@@ -22,7 +22,25 @@ def evaluate():
     model.train()
     
     return loss
- 
+
+
+def get_grad_norm():
+    # L2 norm
+    norm = 0
+    for p in model.parameters():
+        try:
+            norm += torch.linalg.norm(p.grad.detach().data).item()**2
+        except:
+            pass
+
+    #parameters = [p for p in model.parameters() if p.grad is not None and p.requires_grad]
+    #if len(parameters) == 0:
+    #    total_norm = 0.0
+    #else:
+    #    device = parameters[0].grad.device
+    #    total_norm = torch.norm(torch.stack([torch.norm(p.grad.detach(), 2).to(device) for p in parameters]), 2.0).item()
+        
+    return norm**0.5
  
 #TODO add wandb
 
@@ -63,6 +81,7 @@ loss_per_step = {'train': [], 'val': []}
 x, y = dataloader.get_batch(split='train')
 
 best_val_loss = float('inf')
+norm = []
 for step in range(iterations):    
     # Evaluate on validation data every n iterations
     if step > 0 and step % 20 == 0:
@@ -90,6 +109,7 @@ for step in range(iterations):
         loss /= gradient_accumulation_steps
         micro_losses[micro_step] = loss
         loss.backward()  
+        norm.append(get_grad_norm())
         
         x, y = dataloader.get_batch(split='train')
         
@@ -118,11 +138,21 @@ y_ = y_inter(np.linspace(20, val_epochs_array[-1], iterations))
 plt.plot(epochs_array, y_, label='Validation Loss')
  
 plt.title('Training and Validation Loss')
-plt.xlabel('Epochs')
+plt.xlabel('Steps')
 plt.ylabel('Loss')
  
 plt.legend(loc='best')
 
 plt.savefig('assets/loss.jpg')
+
+plt.show()
+
+plt.plot(norm)
+plt.xlabel('Steps')
+plt.ylabel('Gradient Norm')
+ 
+plt.legend(loc='best')
+
+plt.savefig('assets/gradient_norm.jpg')
 
 plt.show()
