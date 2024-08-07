@@ -84,6 +84,39 @@ class GPT(nn.Module):
             
         return logits, loss
         
+    def get_num_params(self, non_embedding=True):
+        """
+        This is taken from https://github.com/karpathy/nanoGPT/blob/9755682b981a45507f6eb9b11eadef8cb83cebd5/model.py#L289
+        Return the number of parameters in the model.
+        For non-embedding count (default), the position embeddings get subtracted.
+        The token embeddings would too, except due to the parameter sharing these
+        params are actually used as weights in the final layer, so we include them.
+        """
+        n_params = sum(p.numel() for p in self.parameters())
+        if non_embedding:
+            n_params -= self.transformer.positional_encodings_table.weight.numel()
+        return n_params
+
+    def estimate_mfu(self, fwdbwd_per_iter, dt):
+        """
+        This is taken from https://github.com/karpathy/nanoGPT/blob/9755682b981a45507f6eb9b11eadef8cb83cebd5/model.py#L289
+        estimate model flops utilization (MFU) in units of MPS Float32 peak FLOPS
+        """
+        # first estimate the number of flops we do per iteration.
+        # see PaLM paper Appendix B as ref: https://arxiv.org/abs/2204.02311
+        N = self.get_num_params()
+        cfg = self.config
+        L, H, Q, T = cfg.n_layers, cfg.heads, cfg.head_size, cfg.block_size
+        flops_per_token = 6*N + 12*L*H*Q*T
+        flops_per_fwdbwd = flops_per_token * T
+        flops_per_iter = flops_per_fwdbwd * fwdbwd_per_iter
+        # express our flops throughput as ratio of M1 Pro peak flops
+        flops_achieved = flops_per_iter * (1.0/dt) # per second
+        flops_promised = 5.2e12 # M1 Pro peak flops is  5.2 TFLOPS, i am not sure if this is for float32 though
+        mfu = flops_achieved / flops_promised
+        
+        return mfu
+    
     @torch.no_grad()
     def generate(self, sequence, max_new_tokens, top_k, device):
         self.to(device)
