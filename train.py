@@ -38,7 +38,7 @@ def get_grad_norm():
     #    total_norm = 0.0
     #else:
     #    device = parameters[0].grad.device
-    #    total_norm = torch.norm(torch.stack([torch.norm(p.grad.detach(), 2).to(device) for p in parameters]), 2.0).item()
+    #    total_norm = torch.norm(torch.stack([torch.norm(p.grad.detach(), 'fro').to(device) for p in parameters]), 2.0).item()
         
     return norm**0.5
  
@@ -113,6 +113,11 @@ for step in range(iterations):
         
         x, y = dataloader.get_batch(split='train')
         
+    # clip the gradient
+    if config.trainer.grad_clip != 0.0:
+        torch.nn.utils.clip_grad_norm_(model.parameters(), config.trainer.grad_clip)
+        
+    # Update weights
     optimizer.step()
     loss_per_step['train'].append(micro_losses.mean().item())
         
@@ -143,7 +148,7 @@ plt.ylabel('Loss')
  
 plt.legend(loc='best')
 
-plt.savefig('assets/loss.jpg')
+plt.savefig('assets/loss_clipped_gradient_version.jpg')
 
 plt.show()
 
@@ -153,6 +158,6 @@ plt.ylabel('Gradient Norm')
  
 plt.legend(loc='best')
 
-plt.savefig('assets/gradient_norm.jpg')
+plt.savefig('assets/clipped_gradient_norm.jpg')
 
 plt.show()

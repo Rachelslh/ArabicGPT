@@ -21,4 +21,5 @@ trainer:
   epochs: 1
   val_steps: 4
   init_lr: 1e-3
+  grad_clip: 1.0
   checkpoint_dir: checkpoints
