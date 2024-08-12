@@ -63,7 +63,7 @@ In a desperate attempt to optimize training as much as i can on an MPS device, i
 
 As a side info, also added gradient clipping after having visualized the gradient norm using L2-norm, the plot shows some instability there (see pikes from before clipping).
 
-<p float="center">
+<p align="center">
   <img src="assets/gradient_norm.jpg" width="30%" />
   <img src="assets/clipped_gradient_norm.jpg" width="30%" /> 
 </p>
@@ -96,7 +96,7 @@ step  538 | loss: 3.238296 | dt: 396.05ms | tok/sec: 0.61
 ## Results
 From the plot, i'm concluding a lack of correlation between the training and the validation data although it comes from the same dataset. There is room for further training as it shows in the plot that it hasn't hit convergence yet.
 
-<p float="center">
+<p align="center">
   <img src="assets/loss.jpg" width="70%" />
 </p>
 
