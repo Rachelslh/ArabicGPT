@@ -100,6 +100,6 @@ From the plot, i'm concluding a lack of correlation between the training and the
   <img src="assets/loss.jpg" width="70%" />
 </p>
 
-## Constributions
+## Contributing
 
 Contributions are welcome! If you have suggestions or would like to contribute to this project, please open an issue to discuss what you would like to change.
