@@ -57,6 +57,7 @@ At present time, i have only trained this on my Macbook M1 Pro, using [Metal PEr
 ### Optimization
 In a desperate attempt to optimize training as much as i can on an MPS device, i've tried several attempts:
 - Mixed precision training, turns out MPS baclend from Pytorch does not support half precision.
+- Tried to add a compiler to take advantage of kernel fusion, that is also not supported on MPS devices.
 - Used Flash attention
 - Added gradient accumulation, to simulate a larger batch size than i can afford
 - Reduced the context length hyparam, from 1024 to 512.
