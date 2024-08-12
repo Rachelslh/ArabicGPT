@@ -34,14 +34,14 @@ Tried to grasp the most of GPT2/GPT3 model settings in order to mimic those mode
 ```
 
 Additional info:
-- Used pre-layer normalization as demonstarted by [!this paper](https://arxiv.org/pdf/2002.04745) instead of post-layer normalization as in the "Attention is all you need" paper.
+- Used pre-layer normalization as demonstarted by [this paper](https://arxiv.org/pdf/2002.04745) instead of post-layer normalization as in the "Attention is all you need" paper.
 - Tried adding dropout layers after every fully connected layer, it did not enhance training in this case, i also did not have any case of overfitting, hence the use of dropout was not ideal here.
 - Just like in the GPT-2 paper, weights are being shared here between the embedding layer and the final linear layer.
 - I am using Flash attention here for optimization purposes, there is a coded (but commented out) version of the self attention mechanism in model.py, put together with the help of Andrej Karpathy's videos.
 
 ## Dataset
 
-I have used a huggingface [!dataset](https://huggingface.co/datasets/ayoubkirouane/Algerian-Darija), contains over 170k rows of the Algerian dilaect with each row contains a different number of tokens. The latter contains several french words and since we're taking baby steps here, i have decided to filter those out.
+I have used a huggingface [dataset](https://huggingface.co/datasets/ayoubkirouane/Algerian-Darija), contains over 170k rows of the Algerian dilaect with each row contains a different number of tokens. The latter contains several french words and since we're taking baby steps here, i have decided to filter those out.
 The dataset is also split between training and validation, leaving 10% to validation.
 
 ### Buidling a tokenizer
@@ -52,7 +52,7 @@ Dataset is saved in .bin files, where each consists of 20 shards as a total.
 
 ## Training
 
-At present time, i have only trained this on my Macbook M1 Pro, using [!Metal PErformance Shaders](https://developer.apple.com/metal/pytorch/) (MPS) device with Pytorch.
+At present time, i have only trained this on my Macbook M1 Pro, using [Metal PErformance Shaders](https://developer.apple.com/metal/pytorch/) (MPS) device with Pytorch.
 
 ### Optimization
 In a desperate attempt to optimize training as much as i can on an MPS device, i've tried several attempts:
@@ -87,7 +87,7 @@ Every 20 training steps, a validation step is launched, validation loss is avera
 - Number of steps is computed using total length of the training dataset divided by the total number of iterations (gradient accumulation steps * batch size).
 
 ### Throughput
-I've measured throughput as stated in this [!paper (Appendix B)](https://arxiv.org/pdf/2204.02311) i.e. using how many FLOPS we can get given the promised device's peak FLOPS measure. After the warm-up period, it seems that we're getting to 60% of what the MPS device can process in a second givent that the promised M1 Pro peak flops is measured "approximately" to 5.2 TFLOPS.
+I've measured throughput as stated in this [paper (Appendix B)](https://arxiv.org/pdf/2204.02311) i.e. using how many FLOPS we can get given the promised device's peak FLOPS measure. After the warm-up period, it seems that we're getting to 60% of what the MPS device can process in a second givent that the promised M1 Pro peak flops is measured "approximately" to 5.2 TFLOPS.
 
 ```bash
 step  538 | loss: 3.238296 | dt: 396.05ms | tok/sec: 0.61
