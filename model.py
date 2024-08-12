@@ -149,7 +149,6 @@ class TransformerBlock(nn.Module):
         return out
     
     
-#TODO Parallelize this
 class ScaledSelfAttentionHead(nn.Module):
     def __init__(self, head_size: int, block_size: int, emb_d: int, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
