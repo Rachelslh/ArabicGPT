@@ -1,7 +1,5 @@
 # Algerian Dialect GPT
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-
 This repository contains the implementation of a GPT model pre-trained on the Algerian dialect. The project aims to contribute to the underrepresented area of natural language processing (NLP) for dialects, with a focus on generating coherent and contextually relevant text in Algerian Arabic.
 
 ## Table of Contents
@@ -19,7 +17,7 @@ This repository contains the implementation of a GPT model pre-trained on the Al
 This project uses a transformer decoder, pre-trained on a corpus of Algerian dialect text. The model is trained to generate text that is contextually relevant and adheres to the linguistic characteristics of the Algerian dialect.
 
 <p align="center">
-  <img src="assets/transformers.jpg" width="70%" />
+  <img src="assets/transformers.jpg" width="40%" height="30%" />
 </p>
 
 Tried to grasp the most of GPT2/GPT3 model settings in order to mimic those models, although i've had to set some of the pramaters to lower values given the fact that i'm training on MPS device.
@@ -66,8 +64,8 @@ In a desperate attempt to optimize training as much as i can on an MPS device, i
 As a side info, also added gradient clipping after having visualized the gradient norm using L2-norm, the plot shows some instability there (see pikes from before clipping).
 
 <p float="left">
-  <img src="assets/gradient_norm.png" width="30%" />
-  <img src="assets/clipped_gradient_norm.png" width="30%" /> 
+  <img src="assets/gradient_norm.jpg" width="30%" />
+  <img src="assets/clipped_gradient_norm.jpg" width="30%" /> 
 </p>
 
 ### Validation
@@ -99,7 +97,7 @@ step  538 | loss: 3.238296 | dt: 396.05ms | tok/sec: 0.61
 From the plot, i'm concluding a lack of correlation between the training and the validation data although it comes from the same dataset. There is room for further training as it shows in the plot that it hasn't hit convergence yet.
 
 <p float="left">
-  <img src="assets/loss.png" width="70%" />
+  <img src="assets/loss.jpg" width="70%" />
 </p>
 
 ## Constributions
