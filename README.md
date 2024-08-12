@@ -33,7 +33,7 @@ Tried to grasp the most of GPT2/GPT3 model settings in order to mimic those mode
   block_size: 512
 ```
 
-Additional info:
+### Additional info
 - Used pre-layer normalization as demonstarted by [this paper](https://arxiv.org/pdf/2002.04745) instead of post-layer normalization as in the "Attention is all you need" paper.
 - Tried adding dropout layers after every fully connected layer, it did not enhance training in this case, i also did not have any case of overfitting, hence the use of dropout was not ideal here.
 - Just like in the GPT-2 paper, weights are being shared here between the embedding layer and the final linear layer.
