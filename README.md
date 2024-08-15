@@ -30,7 +30,7 @@ Tried to grasp the most of GPT2/GPT3 model settings in order to mimic those mode
   n_layers: 12
   heads: 12
   head_size: 64
-  block_size: 512
+  block_size: 256
 ```
 
 ### Additional info
@@ -75,11 +75,11 @@ Every 20 training steps, a validation step is launched, validation loss is avera
 ### Config
 
 ```python
-  steps: 1466
+  steps: 2933
   gradient_accumulation_steps: 2
-  epochs: 2
+  epochs: 1
   val_steps: 4
-  init_lr: 1e-3
+  init_lr: 6e-4
   grad_clip: 1.0
   checkpoint_dir: checkpoints
 ```
