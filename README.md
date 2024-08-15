@@ -98,7 +98,7 @@ step  538 | loss: 3.238296 | dt: 396.05ms | tok/sec: 0.61
 From the plot, i'm concluding a lack of correlation between the training and the validation data although it comes from the same dataset. There is room for further training as it shows in the plot that it hasn't hit convergence yet.
 
 <p align="center">
-  <img src="assets/loss.jpg" width="70%" />
+  <img src="assets/loss_and_norm.jpg" width="70%" />
 </p>
 
 ## Contributing

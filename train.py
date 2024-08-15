@@ -49,6 +49,7 @@ config = OmegaConf.load("config/config.yaml")
 
 block_size = config.model.block_size
 batch_size = config.dataloader.batch_size
+init_lr = config.trainer.init_lr
 iterations = config.trainer.steps * config.trainer.epochs
 gradient_accumulation_steps = config.trainer.gradient_accumulation_steps
 val_steps = config.trainer.val_steps
@@ -73,8 +74,10 @@ model = GPT(model_config)
 
 #TODO add logging into wandb, add checkpointing
 
-optimizer = torch.optim.Adam(model.parameters(), lr=config.trainer.init_lr)
+optimizer = torch.optim.AdamW(model.parameters(), lr=init_lr, betas=(0.9, 0.95))
 optimizer.zero_grad()
+
+lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, iterations, init_lr * 0.1)
 
 model.to(device)
 
@@ -122,6 +125,8 @@ for step in range(iterations):
     optimizer.step()
     loss_per_step['train'].append(micro_losses.mean().item())
         
+    lr_scheduler.step()
+    
     # Flush the gradients before next step
     optimizer.zero_grad(set_to_none=True)
     
@@ -143,22 +148,11 @@ y_inter = interp.interp1d(val_epochs_array, loss_per_step['val'])
 y_ = y_inter(np.linspace(20, val_epochs_array[-1], iterations))
 plt.plot(epochs_array, y_, label='Validation Loss')
  
-plt.title('Training and Validation Loss')
+plt.plot(norm, label='Gradient Norm')
+ 
+plt.title('Training, Validation Loss and Gradient Norm')
 plt.xlabel('Steps')
-plt.ylabel('Loss')
  
 plt.legend(loc='best')
 
-plt.savefig('assets/loss.jpg')
-
-plt.show()
-
-plt.plot(norm)
-plt.xlabel('Steps')
-plt.ylabel('Gradient Norm')
- 
-plt.legend(loc='best')
-
-plt.savefig('assets/clipped_gradient_norm.jpg')
-
-plt.show()
+plt.savefig('assets/loss_and_norm.jpg')

@@ -46,6 +46,10 @@ class GPT(nn.Module):
         
         self.apply(self._init_weights)
                 
+    def load_from_checkpoint(self, path):
+        checkpoint = torch.load(path)
+        self.load_state_dict(checkpoint['model'])
+        
     def _init_weights(self, module):
         std = 0.02
         if isinstance(module, nn.Linear):
@@ -123,7 +127,7 @@ class GPT(nn.Module):
         self.eval()
         for _ in range(max_new_tokens):
             pre_seq = sequence if sequence.size(1) <= self.block_size else sequence[:, -self.block_size:]
-            logits, _ = self(pre_seq)
+            logits, _ = self(pre_seq, device=device)
             logits = logits[:, -1, :]
             values, _ = torch.topk(logits, min(top_k, logits.size(-1)))
             logits[logits < values[:, [-1]]] = float('-inf')
