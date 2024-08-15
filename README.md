@@ -101,6 +101,22 @@ From the plot, i'm concluding a lack of correlation between the training and the
   <img src="assets/loss_and_norm.jpg" width="70%" />
 </p>
 
+Example:
+- pre-sequence: 'وحد نهار'
+- results:
+```
+'وحد نهار <|endoftext|>الله يبارك <|endoftext|>الله يرحم النوري وربي يرحم النوري ويشفي عمي صالح اوقاو <|endoftext|>الله يبارك خويا جواد ربي يحفظك <|endoftext|>الله يبارك خويا <|endoftext|>الله يبارك خويا جمال <|endoftext|>ربي يحفظك خويا جمال <|endoftext|>الله يبارك <|endoftext|>ربي يوفقك خويا جمال ربي يحفظك خويا جواد <|endoftext|>الله يبارك خويا جواد <|endoftext|>ربي يحفظك خويا جمال خويا جمال <|endoftext|>ربي يوفقك خويا جمال <|endoftext|>ربي يوفقك <|endoftext|>الله يبارك فيك خويا جواد خويا جمال ربي يحفظك خويا جواد <|endoftext|>ربي يوفقك خويا جواد '
+```
+
+Given the loss curves and results, the model is clearly overfitting which shows how imbalance the dataset is and also how much more compute is needed because the plot shows that model hasn't converged yet.
+
+
+## Usage
+Once the dependencies are installed, you can start generating text using the pre-trained model. Here’s an example:
+```bash
+python generate.py
+```
+
 ## Contributing
 
 Contributions are welcome! If you have suggestions or would like to contribute to this project, please open an issue to discuss what you would like to change.
